@@ -8,6 +8,8 @@
 #include <fstream>
 #include <iterator>
 
+#include "static_analysis.hpp"
+
 using namespace eosio;
 using namespace eosio::vm;
 
@@ -91,9 +93,21 @@ int main(int argc, char** argv) {
       backend_t bkend(wasm_bytes, hf, &wa);
 
       bkend(hf, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
+
+      // static analysis
+      static_analysis sa;
+      for (std::size_t i=0; i < bkend.get_module().code.size(); ++i) {
+         const auto& body = bkend.get_module().code[i];
+
+         for (std::size_t j=0; j < body.size; ++j) {
+            visit(sa, body.code[j]);
+         }
+      }
+      std::cout << "How many found ops: " << sa.get_count() << std::endl;
    } catch (const eosio::vm::exception& ex) {
       std::cerr << ex.detail() << std::endl;
       return -1;
    }
+
    return 0;
 }
