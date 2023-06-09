@@ -13,9 +13,9 @@ link_libraries(Threads::Threads)
 set(ENABLE_SOFTFLOAT OFF CACHE BOOL "Enable softfloat support")
 set(ENABLE_INSTALL OFF CACHE BOOL "Enable installation")
 set(ENABLE_TOOLS OFF CACHE BOOL "Enable tools")
-add_subdirectory(eos-vm)
+#add_subdirectory(eos-vm)
 
 add_executable(driver src/main.cpp)
-target_link_libraries(driver eos-vm)
+#target_link_libraries(driver eos-vm)
 
 add_subdirectory(contracts)

@@ -9,9 +9,14 @@
 #include <iterator>
 
 #include "static_analysis.hpp"
+#include "my_backend.hpp"
 
 using namespace eosio;
 using namespace eosio::vm;
+
+extern std::map<std::string, uint32_t> frequency;
+extern uint32_t total_memops;
+
 
 // needed because CDT is stupid
 template <typename T, std::size_t Align = alignof(T)>
@@ -34,13 +39,8 @@ struct base_host_functions {
 };
 
 struct host_functions : public base_host_functions {
-   void print_hello() {
-      std::cout << "Hello, world!" << std::endl;
-   }
 
-   void print_number(int32_t n) {
-      std::cout << "Number: " << n << std::endl;
-   }
+   void print_num(uint64_t n) { std::cout << "Number : " << n << "\n"; }
 };
 
 struct cnv : type_converter<host_functions> {
@@ -54,10 +54,9 @@ struct cnv : type_converter<host_functions> {
 int main(int argc, char** argv) {
    wasm_allocator wa;
    using rhf_t = eosio::vm::registered_host_functions<host_functions, execution_interface, cnv>;
-   using backend_t = eosio::vm::backend<rhf_t>;
+   using backend_t = eosio::vm::my_backend<rhf_t>;
 
-   rhf_t::add<&host_functions::print_hello>("env", "print_hello");
-   rhf_t::add<&host_functions::print_number>("env", "print_number");
+      rhf_t::add<&host_functions::print_num>("env", "print_num");
 
    // once again needed because of CDT
    rhf_t::add<&host_functions::eosio_assert>("env", "eosio_assert");
@@ -94,16 +93,22 @@ int main(int argc, char** argv) {
 
       bkend(hf, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
 
-      // static analysis
-      static_analysis sa;
-      for (std::size_t i=0; i < bkend.get_module().code.size(); ++i) {
-         const auto& body = bkend.get_module().code[i];
+      //// static analysis
+      //static_analysis sa;
+      // for (std::size_t i=0; i < bkend.get_module().code.size(); ++i) {
+      //    const auto& body = bkend.get_module().code[i];
 
-         for (std::size_t j=0; j < body.size; ++j) {
-            visit(sa, body.code[j]);
-         }
+      //    for (std::size_t j=0; j < body.size; ++j) {
+      //       visit(sa, body.code[j]);
+      //    }
+      // }
+      // std::cout << "How many found ops: " << sa.get_count() << std::endl;
+      for(const auto& elem : frequency) {
+         std::cout << "Count of: " << elem.first << " " << elem.second << std::endl;
       }
-      std::cout << "How many found ops: " << sa.get_count() << std::endl;
+      std::cout << "Total memops: " << total_memops << std::endl;
+
+
    } catch (const eosio::vm::exception& ex) {
       std::cerr << ex.detail() << std::endl;
       return -1;
